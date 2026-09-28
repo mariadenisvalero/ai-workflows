@@ -124,6 +124,10 @@ When a module wants "just the fabric/color, no figure" as a background:
 2. Crop at (or close to) the target frame's aspect ratio so Figma's `FILL` scaleMode doesn't do a surprise crop of its own.
 3. Upscale the clean crop with `Image.LANCZOS` before uploading (a small clean source patch upscaled beats a hastily-cropped bigger area with contamination at the edges).
 
-## General sequencing
+## General sequencing — batched verification (speed optimization, 2026-09-28)
 
-Build and confirm one module at a time — screenshot after every image swap, every text edit, and every color change, using `get_screenshot` scoped to that module's own node id. These templates nest frames deeply and repeat background colors across siblings; changes that look right in isolation can be applied to the wrong node without a screenshot catching it immediately.
+Build one module at a time, but batch its edits: make the text edits and color changes together, THEN take a single `get_screenshot` scoped to that module's own node id to confirm all of them landed on the right nodes — not a separate screenshot after each individual edit. This cuts 2-3 screenshot calls per module down to 1 for text/color work.
+
+**Exception — this does NOT apply to the per-image-node check.** The image-specific verification in `module-library.md`'s "an image frame must never be left empty" section (screenshot scoped to the specific image node itself, not the whole module) stays separate and mandatory, every time, per image — that check exists because a small broken image frame is confirmed to be missable in a broader module/section screenshot, and it's the only thing standing behind the hard "no broken image frame" rule. Don't fold it into the batched text/color screenshot above or skip it to save a call.
+
+These templates nest frames deeply and repeat background colors across siblings, so a batched screenshot can still catch a text/color edit applied to the wrong node — just after finishing the module's text/color work instead of after each line, trading slightly coarser failure localization (you may need to re-check which of 2-3 edits was wrong) for fewer tool calls.
