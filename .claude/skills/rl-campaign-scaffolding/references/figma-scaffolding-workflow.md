@@ -2,11 +2,25 @@
 
 Verified live against the real "EMAIL MONTH FY27 - TEMPLATE" file (2026-09-28), node-id `135:1308`. If the user points this skill at a different file, re-verify the structure below before assuming it matches — don't build against a guess (see the general lesson in the assembly skill's `figma-workflow.md`: nested frames and field names are easy to get subtly wrong without checking live).
 
-## Finding the master template section
-There should be exactly **one** section on the target page named literally **"Email 01 - Email Name (New Template)"** — that's the pristine, never-duplicated-from-since-cleaned master. Find it by name, not by a hardcoded node id (ids are specific to one file and won't match a different month's template file):
+## Finding the right page — always "FW1", never guessed
+
+**Standing pipeline default (2026-09-28): every campaign scaffolds onto the page literally named "FW1" — every time, regardless of the brief's actual fiscal week or month.** This is a temporary simplification, not real fiscal-period routing — a real "pick the page matching this campaign's month/week" rule doesn't exist yet. Don't try to infer or guess a different page from the brief's fiscal week/month; "FW1" is the one and only target until this gets built out properly.
+
+Find the page by name, not by a remembered/hardcoded page id (ids are specific to one file and won't survive a new month's template file):
 ```js
-const page = await figma.getNodeByIdAsync('<page-id>');
+const pages = figma.root.children; // top-level pages
+const page = pages.find(p => p.name === 'FW1');
+if (!page) {
+  // STOP — do not fall back to any other page (a "Tests" page included).
+  // Tell the user no page named "FW1" was found and wait rather than guessing.
+}
 await figma.setCurrentPageAsync(page);
+```
+This was confirmed missing once already: a run found no explicit page-selection rule, defaulted to whatever page it was already on (a "Tests" page), and scaffolded a fully-correct section onto the wrong page — the section's own content was fine, only its page placement was wrong. **Never default to the current/active page or any page whose name isn't an exact "FW1" match** — that's exactly the failure mode this rule exists to prevent.
+
+## Finding the master template section
+There should be exactly **one** section on the "FW1" page named literally **"Email 01 - Email Name (New Template)"** — that's the pristine, never-duplicated-from-since-cleaned master. Find it by name, not by a hardcoded node id (ids are specific to one file and won't match a different month's template file):
+```js
 const master = page.findOne(n => n.type === 'SECTION' && n.name === 'Email 01 - Email Name (New Template)');
 ```
 If none is found, or more than one is found, stop and tell the user — don't guess which one is the real master.
