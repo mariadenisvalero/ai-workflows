@@ -60,8 +60,25 @@ node.characters = '<real SL from the matching email in the Campaign Plan>';
 ```
 Because there are now three `"Subjectline here"` / `"Pre-header here"` placeholder pairs in one section (one per `SL/PH` frame), don't use `findOne` for these two — use `findAll` and match each match's parent frame to the correct email by x-position (see above) before setting its text, or you risk writing the wrong email's SL into the wrong slot. The three Timeline date placeholders remain a single shared set — `findOne` is fine for those.
 
-## Placing the two shared brief screenshots
-Use the same `upload_assets` → `curl` POST pattern documented in the assembly skill's `figma-workflow.md` (submit URL, multipart POST, verify `placedOnNodeId` came back before trusting it landed) — the mechanism is identical whether the image is a product photo or a screenshot of a brief. Target the `Marketing Brief` frame and the `Image Mapping` frame directly (they're plain frames, not nested like the module image-fill targets in the assembly skill, so no need to hunt for an inner node — but confirm with a screenshot regardless, since the upload step has a known first-attempt-silently-fails quirk). These are placed once per section, not once per email.
+## Standing rule: everything written into Figma is English, always
+**No exception, regardless of the language the brief arrived in.** The brief itself can come in Spanish (or anything else) — the person triggering the pipeline may write it in their own language — but every piece of text this skill (or `rl-brand-copy`/`rl-email-assembly`) places into the Figma file — the `Marketing Brief` frame's text, the `Image Mapping` labels, SL/PH, timeline labels, module copy, everything — must be in English. **Never paste the brief verbatim into the `Marketing Brief` frame if it wasn't given in English — translate it first.** Confirmed failure (2026-09-28, W Polo test): a Spanish-language brief was copied into the `Marketing Brief` frame word for word, untranslated, because the pipeline treated "text as received" as "paste as received." Reword/translate, don't transcribe.
+
+## Placing the two shared brief items: real screenshot vs. text-only brief
+The brief arrives one of two ways (per `rl-email-pipeline`'s intake): as an actual screenshot image of a written brief document, or as plain text describing the campaign. These need different handling for the `Marketing Brief` and `Image Mapping` frames — don't improvise a new layout each time; use whichever of the two standing formats below matches what you got, so every run looks consistent regardless of who or what triggered it (a manual test here, or the real Lovable job intake).
+
+**Case A — a real screenshot was given.** Use the `upload_assets` → `curl` POST pattern documented in the assembly skill's `figma-workflow.md` (submit URL, multipart POST, verify `placedOnNodeId` came back before trusting it landed) — the mechanism is identical whether the image is a product photo or a screenshot of a brief. Target the `Marketing Brief` frame and the `Image Mapping` frame directly (they're plain frames, not nested like the module image-fill targets in the assembly skill, so no need to hunt for an inner node — but confirm with a screenshot regardless, since the upload step has a known first-attempt-silently-fails quirk). These are placed once per section, not once per email.
+
+**Case B — the brief arrived as plain text (no screenshot) — this is the standing default format, confirmed working well (2026-09-28, W Polo test):**
+- `Marketing Brief` frame: a single text block, translated to English if needed, in this exact shape — a one-line header naming the source and key facts, then the brief itself:
+  ```
+  MARKETING BRIEF (text as received) - <Brand>, <fiscal week>, Drive folder '<folder name>'
+
+  <the brief's content, translated to English, in full — don't summarize it down to a bullet list of "decisions made"; the brief's own words belong here, the inferred decisions belong in the final chat summary per rl-email-pipeline's SKILL.md, not rewritten into this frame>
+  ```
+  Don't invent a "Decisions made (brief gave no further detail)" bullet-list redesign of the brief — that was an earlier, inconsistent format (seen on an older Tests-page section) and reads as a different tool entirely from one run to the next. Keep it to the header line plus the brief text.
+- `Image Mapping` frame: build an actual contact sheet — place real thumbnail images of the candidate/selected photos from the matched Drive folder as a grid inside the frame (same `upload_assets` pattern as any module photo, just several small placements instead of one), each with its filename underneath. Don't fall back to a text-only list of filenames with one-line descriptions — a grid of real thumbnails is what confirmed well and is what the frame's name implies (an actual visual mapping, not a caption list).
+
+Whichever case applies, these are placed once per section, not once per email.
 
 ## Final check
 Screenshot the whole new section (all three `Email design` columns, not just one) before calling the scaffolding done — confirm the name, all three SL/PH pairs (matched to the right column), the shared timeline dates, and both shared screenshots landed, and that `Email design 1/2/3` are still empty and ready for the assembly skill.
