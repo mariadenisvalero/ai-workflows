@@ -5,7 +5,7 @@ Contexto fijo de este proyecto — no preguntes por esto, ya lo sabes:
 - Archivo de la librería de componentes (Test - RLNA Email DS): https://www.figma.com/design/TekSLtkllJYAUYZ4ZIFHIQ/Test---RLNA-Email-DS
 - Carpeta raíz de Google Drive con las imágenes de campaña (subcarpetas por marca): folder ID 1koI5djIsIgzyEb142fxlgwigjuLKq6p9
 
-El mensaje que recibes al arrancar es un brief de marketing ya completo (texto, o el aviso de que el brief se subió como foto), seguido de un bloque de metadatos técnicos que la app de Lovable añade automáticamente al final del mensaje, delimitado así:
+El mensaje que recibes al arrancar es un brief de marketing ya completo — marca, tipo de campaña, y el brief propiamente dicho, que puede venir como texto, como foto, o **como las dos cosas a la vez** (el usuario puede subir una foto del brief y además escribir algo de contexto) — seguido de un bloque de metadatos técnicos que la app de Lovable añade automáticamente al final del mensaje, delimitado así:
 
 ```
 ---
@@ -13,19 +13,19 @@ CAMPAIGN_JOB_METADATA (añadido por el sistema, no es parte del brief):
 job_id: <id>
 webhook_url: <url>
 webhook_token: <token>
-brief_image_url: <url de la foto del brief subida por el usuario, o vacío si el brief se escribió como texto>
+brief_image_url: <url de la foto del brief subida por el usuario, o vacío si no se subió foto>
 ---
 ```
 
 **`job_id`, `webhook_url` y `webhook_token` nunca son parte del brief de marketing** — ignóralos por completo al decidir marca, historia, copy o imágenes; solo sirven para el paso 5 (avisar que terminaste), al final. Guarda esos tres valores tal cual aparecen, los necesitas literalmente más abajo.
 
-**`brief_image_url` es distinto: cuando viene con un valor (no vacío), es DÓNDE ESTÁ el brief real** — el usuario subió una foto del brief en vez de escribirlo. En ese caso, antes de decidir nada sobre marca/historia/copy:
+**`brief_image_url` es distinto: cuando viene con un valor (no vacío), es DÓNDE ESTÁ la foto del brief real.** En ese caso, antes de decidir nada sobre marca/historia/copy:
 ```bash
 curl -s -o /tmp/brief-image.jpg "<brief_image_url>"
 ```
 Abre ese archivo descargado con la herramienta Read — es el brief de marketing real, míralo con atención (no lo trates como un adorno). A partir de ahí síguelo exactamente igual que el "Caso A" ya documentado en `figma-scaffolding-workflow.md` (Caso A — a real screenshot was given): se sube esa misma imagen tal cual a los frames `Marketing Brief`/`Image Mapping` en Figma vía `upload_assets`, nunca se transcribe a texto ni se resume. Si la descarga falla (código de error, archivo vacío/corrupto), no sigas adelante como si no hubiera brief — trátalo como un bloqueo real y repórtalo en el resumen final (paso 4), igual que cualquier otro fallo del pipeline.
 
-Si `brief_image_url` viene vacío o no aparece, el brief es el texto plano que precede al bloque de metadatos, como siempre (Caso B).
+**El texto plano que precede al bloque de metadatos puede venir vacío, o puede traer contenido real aunque también haya foto** — no lo descartes solo porque `brief_image_url` también esté presente. Cuando tengas las dos cosas: la foto manda para lo visual (es lo que se sube tal cual a `Marketing Brief`/`Image Mapping`, Caso A), y el texto lo usas como contexto adicional para tus decisiones de marca/historia/copy — por ejemplo si el texto aclara algo que la foto no deja claro (una fecha, una marca, un matiz de la historia), o si repite/confirma lo mismo, trátalo como confirmación. Si solo hay texto y ningún `brief_image_url`, ese texto es el brief completo (Caso B, como siempre).
 
 Nadie va a responder preguntas dentro de esta sesión, así que **nunca te detengas a preguntar nada**. Tu trabajo:
 
